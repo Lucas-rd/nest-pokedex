@@ -12,6 +12,7 @@ import { JoiValidationsSchema } from './config/joi.validation';
 @Module({
   imports: [
 
+    //con el ConfifModule podemos configurar el archivo de "enviroment" para definir las variables de entorno
     ConfigModule.forRoot({
       load: [EnvConfiguration],
       validationSchema: JoiValidationsSchema,
