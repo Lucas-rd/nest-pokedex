@@ -1,19 +1,29 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { Pokemon } from './entities/pokemon.entity';
-import { isValidObjectId, Model } from 'mongoose';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
+
+import { isValidObjectId, Model } from 'mongoose';
+import { Pokemon } from './entities/pokemon.entity';
 
 import { CreatePokemonDto } from './dto/create-pokemon.dto';
 import { UpdatePokemonDto } from './dto/update-pokemon.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class PokemonService {
+  
+  private defaulLimit: number
 
   //Inyecto la dependencia en el constructor del service de la conexion a la base de datos con el Model de mongoose, basicamente aca hago la conec con la bbdd usando la configuracion de Mongoose:
   constructor(
     @InjectModel( Pokemon.name )
-    private readonly pokemonModel: Model<Pokemon>
-  ){}
+    private readonly pokemonModel: Model<Pokemon>,
+
+    private readonly configService: ConfigService,
+
+  ){
+    this.defaulLimit = configService.get<number>('defaulLimit')
+  }
 
   async create(createPokemonDto: CreatePokemonDto) {
     createPokemonDto.name = createPokemonDto.name.toLocaleLowerCase()
@@ -26,8 +36,15 @@ export class PokemonService {
     }
   }
 
-  findAll() {
-    return `This action returns all pokemon`;
+  async findAll(paginationDto: PaginationDto) {
+
+    const { limit = this.defaulLimit, offset = 0 } = paginationDto
+
+    return await this.pokemonModel.find()
+      .limit( limit )
+      .skip( offset )
+      .sort({ no: 1 })
+      .select('-__v')
   }
 
   async findOne(term: string) {
